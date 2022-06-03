@@ -268,7 +268,7 @@ class RealScenario(py_environment.PyEnvironment):
         elif action == 50:
             c = self.ac.bigChange() + self.cs.charge(1) + self.sb.discharge24()
         val = self.objective_curve[self._state] + c
-        self.consumption = C
+        self.consumption = c
         self.cumulative_consumption += val
             
 
@@ -384,7 +384,6 @@ def mas(curve, flexibility):
                 observers=replay_observer + train_metrics,
         num_steps=1)
     print(compute_avg_return(eval_env, tf_agent.policy, num_eval_episodes))
-
     tf_agent.train = common.function(tf_agent.train)
     tf_agent.train_step_counter.assign(0)
     action_values = ["Do nothing", "Small change temperature", "Big Change temperature", "EV Charge", "EV Discharge", "SB Charge12", "SB Charge24" ,"SB Charge36", "SB Discharge12" ,"SB Discharge24", "SB Discharge36", "Small Change Temperature and EV Charge", "Small Change Temperature and EV Discharge", "Small Change Temperature and SB Charge12", "Small Change Temperature and SB Charge24", "Small Change Temperature and SB Charge36", "Small Change Temperature and SB Discharge12", "Small Change Temperature and SB Discharge24", "Small Change Temperature and SB Discharge36", "Big Change Temperature and EV Charge", "Big Change Temperature and EV Discharge", "Big Change Temperature and SB Charge12", "Big Change Temperature and SB Charge24", "#Big Change Temperature and SB Charge36", "Big Change Temperature and SB Discharge12", "Big Change Temperature and SB Discharge24", "Big Change Temperature and SB Discharge36", "EV Charge and SB Charge12", "EV Charge and SB Charge24", "EV Charge and SB Charge36", "EV Charge and SB Discharge12", "EV Charge and SB Discharge24", "EV Charge and SB Discharge36", "EV Discharge and SB Charge12", "EV Discharge and SB Charge24", "EV Discharge and SB Charge36", "EV Discharge and SB Discharge12", "EV Discharge and SB Discharge24", "EV Discharge and SB Discharge36", "Small Change Temperature, EV Charge and SB Charge12", "Small Change Temperature, EV Charge and SB Charge24", "Small Change Temperature, EV Charge and SB Charge36", "EV Charge and SB Discharge12", "Small Change Temperature, EV Charge and SB Discharge24", "Small Change Temperature, EV Charge and SB Discharge36", "Big Change Temperature, EV Charge and SB Charge12", "Big Change Temperature, EV Charge and SB Charge24", "Big Change Temperature, EV Charge and SB Charge36", "Big Change Temperature, EV Charge and SB Discharge12", "Big Change Temperature, EV Charge and SB Discharge24",  "Big Change Temperature, EV Charge and SB Discharge36"]
@@ -440,49 +439,11 @@ def mas(curve, flexibility):
 
 def get_output():
     try:
-        client = MongoClient(host = 'mongodb://192.168.48.206:27017/', username="cemosa", password="ebalance")
-
-        db = client.Ebalance
-        col = db["emv210"]
-
-        data = col.find({},{"datetime" : 1, "kwh_p_tot_r" : 1}).sort("_id", -1).limit(1) 
-
-        timestamp = pd.to_datetime(data[0]["datetime"])
-        dow = timestamp.dayofweek
-        timestamp = timestamp.strftime('%d/%m/%Y %H:%M:%S')
-        day = timestamp[0:2]
-        month = timestamp[3:5]
-        year = timestamp[6:10]
-        hour = timestamp[11:13]
-        minute = timestamp[14:16]
-        second = timestamp[17:19]
-        
-        
-        col2 = db["openweather"]
-        weather = 0
-        data2 = col2.find().sort("_id", -1).limit(1)
-        if data2[0]["weather"] == "Clouds":
-            weather = 0
-        elif data2[0]["weather"] == "Clear":
-            weather = 1
-        elif data2[0]["weather"] == "Rain":
-            weather = 2
-        elif data2[0]["weather"] == "Drizzle":
-            weather = 3
-        elif data2[0]["weather"] == "Mist":
-            weather = 4
-        elif data2[0]["weather"] == "Thunderstorm":
-            weather = 5
-        elif data2[0]["weather"] == "Haze":
-            weather = 6
-        elif data2[0]["weather"] == "Fog":
-            weather = 7
-
-        scaler = load(open("models/scaler.pkl", 'rb'))
+        scaler = load(open("models/scaler_final.pkl", 'rb'))
         simplernn_model = tf.keras.models.load_model("models/model_simple_rnn.h5")  
         dense_model = tf.keras.models.load_model("models/model_dense_3.h5")
         lstm_model = tf.keras.models.load_model("models/model_lstm.h5")
-        new_x = np.array([[47.0, 1, 26.09, 30.8, 1014, 40, 4.12, 2, 1, 6, 2022, 13, 00, 00, 44.0, 25.4, 23.7, 61.7]])
+        new_x = np.array([[41.2, 0, 21.57, 24.14, 1013, 58, 7.72, 4, 3, 6, 2022, 10, 15, 0, 39.6, 28.5, 26.3, 25.2, 23.4, 22.7, 26.1, 23.4]]) 
 
         X = scaler.transform(new_x)    
         dense_pred = dense_model.predict(X)
